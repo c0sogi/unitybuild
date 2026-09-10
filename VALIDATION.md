@@ -1,6 +1,6 @@
 # unitybuild validation
 
-Last updated: 2026-09-10. Package version: 0.1.1 (patch release validation in progress).
+Last updated: 2026-09-10. Package version: 0.1.1 (published patch release).
 This document records package-level checks and their limits. Application-specific
 migration history, deployment logs, device identifiers, and machine-local evidence
 paths are outside its scope.
@@ -8,18 +8,21 @@ paths are outside its scope.
 Version 0.1.0 had one passing three-OS run, followed by macOS failures on the
 same runtime code. A single passing run did not establish reliable cancellation.
 Version 0.1.1 adds deterministic coverage for permission errors during group
-signalling and ten repeated macOS cancellation-suite runs in CI. Release status
-is recorded after those checks finish; old CI records are no longer available.
+signalling and ten repeated macOS cancellation-suite runs in CI. Those checks all passed for the published source; old CI records are no longer available.
+
+[Release CI](https://github.com/c0sogi/unitybuild/actions/runs/34488785653)
+passed on Windows, Linux and macOS for the exact v0.1.1 source. The PyPI patch
+is available at [unitybuild 0.1.1](https://pypi.org/project/unitybuild/0.1.1/).
 
 ## Latest source checks
 
 | Check | Result |
 | --- | --- |
 | Windows Python tests | 130 passed, 2 subtests passed; 2 POSIX-only tests skipped |
-| Linux Python tests | Pending current CI |
+| Linux Python tests | 134 passed, 2 subtests passed on GitHub Actions |
 | Ruff, including import sorting | Passed on Windows |
 | Pyright | Passed on Windows |
-| macOS Python tests | Pending current CI and ten repeated cancellation runs |
+| macOS Python tests | 134 passed, 2 subtests passed; cancellation suite passed 20 tests in each of 10 consecutive runs |
 
 Linux tests ran under WSL2 with musl and CPython 3.12.13. Filesystem lock tests used
 native Linux storage rather than a Windows-mounted directory. Test results do not
