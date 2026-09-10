@@ -7,8 +7,10 @@ paths are outside its scope.
 
 The first public version is 0.1.0. Earlier 0.1.11 through 0.1.14 labels below
 identify unpublished development snapshots, not previous public releases. Runtime
-files in the 0.1.0 wheel match the validated 0.1.14 candidate byte for byte; only
-version metadata and documentation changed.
+files were initially carried over from the 0.1.14 candidate. The first GitHub
+macOS run then found that simultaneous flock/record-lock probes conflicted with
+each other. Each probe now releases its lock before the next probe. Existing
+real-lock cancellation and retry tests exercise this correction on CI.
 
 ## Latest source checks
 

@@ -85,11 +85,12 @@ def project_lock_is_held(project: Path) -> bool:
 
         try:
             with path.open("r+b") as stream:
-                # Linux keeps BSD flock and POSIX record locks separate; check
-                # both. On macOS these APIs are also available. Closing this
-                # descriptor releases the probe locks, including on failure.
-                fcntl.flock(stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                fcntl.lockf(stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                # Linux keeps flock and POSIX record locks separate; check both.
+                # On macOS they interact, so release each probe before the next
+                # to avoid mistaking our own probe for another process's lock.
+                for lock in (fcntl.flock, fcntl.lockf):
+                    lock(stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    lock(stream, fcntl.LOCK_UN)
             return False
         except FileNotFoundError:
             return False
