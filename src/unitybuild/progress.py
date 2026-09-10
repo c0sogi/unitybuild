@@ -18,6 +18,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import IO, Self
 
+import psutil
 from rich.console import Console
 from rich.live import Live
 from rich.text import Text
@@ -207,6 +208,27 @@ class BuildMonitor:
             self.console.print(f"Full log: {self.log_path}", style="dim", markup=False)
 
 
+def _signal_process_group(group: int, sig: int) -> bool:
+    """Signal an owned group; distinguish absent/terminated members from denial."""
+    try:
+        getattr(os, "killpg")(group, sig)
+        return True
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        # Darwin can return EPERM for a group containing only zombies. Do not
+        # suppress a genuine denial: confirm that no live member remains first.
+        for pid in psutil.pids():
+            try:
+                if getattr(os, "getpgid")(pid) == group and psutil.Process(pid).status() not in (
+                    psutil.STATUS_ZOMBIE, psutil.STATUS_DEAD,
+                ):
+                    raise
+            except (ProcessLookupError, psutil.NoSuchProcess):
+                continue
+        return False
+
+
 def stop_process_tree(process: subprocess.Popen[bytes]) -> None:
     """Cancel only the process tree started for this command."""
     if os.name == "nt":
@@ -221,24 +243,17 @@ def stop_process_tree(process: subprocess.Popen[bytes]) -> None:
     else:
         # run_logged_process creates a new session, so this group belongs only
         # to the build. The leader can exit before children release their locks.
-        try:
-            os.killpg(process.pid, signal.SIGTERM)
-        except ProcessLookupError:
+        if not _signal_process_group(process.pid, signal.SIGTERM):
             process.wait(timeout=3)
             return
         deadline = time.monotonic() + 3
         while time.monotonic() < deadline:
             process.poll()  # Reap the leader so it cannot keep the group alive.
-            try:
-                os.killpg(process.pid, 0)
-            except ProcessLookupError:
+            if not _signal_process_group(process.pid, 0):
                 break
             time.sleep(0.05)
         else:
-            try:
-                os.killpg(process.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
+            _signal_process_group(process.pid, signal.SIGKILL)
         process.wait(timeout=3)
         return
     try:

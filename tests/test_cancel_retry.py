@@ -6,15 +6,47 @@ import signal
 import subprocess
 import sys
 import time
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
+import psutil
 import pytest
 from rich.console import Console
 
 from unitybuild.build_session import BuildSession, BuildSessionError, project_lock_is_held, select_build_session
-from unitybuild.progress import BuildMonitor, run_logged_process
+from unitybuild.progress import BuildMonitor, _signal_process_group, run_logged_process
 
 LOCK_KINDS = ["windows"] if os.name == "nt" else ["flock", "lockf"]
+
+
+@pytest.mark.parametrize("sig", [0, 15, 9])
+@pytest.mark.parametrize("state", [None, psutil.STATUS_ZOMBIE, psutil.STATUS_DEAD, psutil.STATUS_RUNNING])
+def test_group_permission_error_requires_proof_that_no_live_member_remains(sig, state):
+    member = Mock()
+    member.status.return_value = state
+    with (
+        patch("unitybuild.progress.os.killpg", side_effect=PermissionError("signal denied"), create=True),
+        patch("unitybuild.progress.psutil.pids", return_value=[123] if state else []),
+        patch("unitybuild.progress.os.getpgid", return_value=123, create=True),
+        patch("unitybuild.progress.psutil.Process", return_value=member),
+    ):
+        if state == psutil.STATUS_RUNNING:
+            with pytest.raises(PermissionError, match="signal denied"):
+                _signal_process_group(123, sig)
+        else:
+            assert not _signal_process_group(123, sig)
+
+
+def test_group_permission_error_does_not_hide_inaccessible_member_status():
+    member = Mock()
+    member.status.side_effect = psutil.AccessDenied(123)
+    with (
+        patch("unitybuild.progress.os.killpg", side_effect=PermissionError, create=True),
+        patch("unitybuild.progress.psutil.pids", return_value=[123]),
+        patch("unitybuild.progress.os.getpgid", return_value=123, create=True),
+        patch("unitybuild.progress.psutil.Process", return_value=member),
+        pytest.raises(psutil.AccessDenied),
+    ):
+        _signal_process_group(123, 0)
 
 LOCK_HOLDER = r"""
 import ctypes, os, sys, time
@@ -148,7 +180,4 @@ time.sleep(60)
         unrelated.kill()
         unrelated.wait(timeout=3)
         if os.name != "nt" and group.exists():
-            try:
-                os.killpg(int(group.read_text()), signal.SIGKILL)
-            except ProcessLookupError:
-                pass
+            _signal_process_group(int(group.read_text()), signal.SIGKILL)

@@ -5,7 +5,7 @@ Version **0.1.0** is published under the MIT license:
 - [Public repository](https://github.com/c0sogi/unitybuild)
 - [PyPI package](https://pypi.org/project/unitybuild/0.1.0/)
 - [GitHub release](https://github.com/c0sogi/unitybuild/releases/tag/v0.1.0)
-- [Passing release CI](https://github.com/c0sogi/unitybuild/actions/runs/34487294941)
+- Version 0.1.0 has a known intermittent macOS cancellation failure; use the corrected 0.1.1 release.
 
 The commands below describe the release procedure. For subsequent releases,
 change the version first and use a new output directory. Never rebuild changed
@@ -20,9 +20,9 @@ uv sync --locked
 uv run pytest -q
 uv run ruff check src tests
 uv run pyright
-uv build --no-sources --out-dir dist/0.1.0
-uvx --from twine twine check --strict dist/0.1.0/*
-uv publish --dry-run dist/0.1.0/unitybuild-0.1.0-py3-none-any.whl dist/0.1.0/unitybuild-0.1.0.tar.gz
+uv build --no-sources --out-dir dist/0.1.1
+uvx --from twine twine check --strict dist/0.1.1/*
+uv publish --dry-run dist/0.1.1/unitybuild-0.1.1-py3-none-any.whl dist/0.1.1/unitybuild-0.1.1.tar.gz
 ```
 
 Use exactly these two distribution files when publishing. The top-level `dist`
@@ -51,7 +51,7 @@ Commands used for the first publication (the repository already exists):
 
 ```sh
 gh repo create c0sogi/unitybuild --public --source . --remote origin --push
-uv publish dist/0.1.0/unitybuild-0.1.0-py3-none-any.whl dist/0.1.0/unitybuild-0.1.0.tar.gz
+uv publish dist/0.1.1/unitybuild-0.1.1-py3-none-any.whl dist/0.1.1/unitybuild-0.1.1.tar.gz
 ```
 
 The GitHub repository name and PyPI project name are separate. A missing PyPI
@@ -76,3 +76,7 @@ tests and saved-profile preview using the PyPI installation.
 
 Build and publication guidance follows the
 [uv package guide](https://docs.astral.sh/uv/guides/package/).
+
+Use synthetic test project names and paths. Do not copy real people, student
+identifiers, device identifiers or personal workspace paths into fixtures or
+release material. Review tracked source, Git history and CI output before publication.

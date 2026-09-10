@@ -1,31 +1,25 @@
 # unitybuild validation
 
-Last updated: 2026-09-10. Package version: 0.1.0 (published first release).
+Last updated: 2026-09-10. Package version: 0.1.1 (patch release validation in progress).
 This document records package-level checks and their limits. Application-specific
 migration history, deployment logs, device identifiers, and machine-local evidence
 paths are outside its scope.
 
-The first public version is 0.1.0. Earlier 0.1.11 through 0.1.14 labels below
-identify unpublished development snapshots, not previous public releases. Runtime
-files were initially carried over from the 0.1.14 candidate. The first GitHub
-macOS run then found that simultaneous flock/record-lock probes conflicted with
-each other. Each probe now releases its lock before the next probe. Existing
-real-lock cancellation and retry tests exercise this correction on CI.
-
-Published on [PyPI](https://pypi.org/project/unitybuild/0.1.0/) with a
-[GitHub release](https://github.com/c0sogi/unitybuild/releases/tag/v0.1.0).
-The released source passed [Windows, Linux and macOS CI](https://github.com/c0sogi/unitybuild/actions/runs/34487294941),
-including Ruff, Pyright, tests, distribution builds and strict metadata checks.
+Version 0.1.0 had one passing three-OS run, followed by macOS failures on the
+same runtime code. A single passing run did not establish reliable cancellation.
+Version 0.1.1 adds deterministic coverage for permission errors during group
+signalling and ten repeated macOS cancellation-suite runs in CI. Release status
+is recorded after those checks finish; old CI records are no longer available.
 
 ## Latest source checks
 
 | Check | Result |
 | --- | --- |
-| Windows Python tests | 117 passed, 2 subtests passed; 2 POSIX-only tests skipped |
-| Linux Python tests | 121 passed, 2 subtests passed |
+| Windows Python tests | 130 passed, 2 subtests passed; 2 POSIX-only tests skipped |
+| Linux Python tests | Pending current CI |
 | Ruff, including import sorting | Passed on Windows |
 | Pyright | Passed on Windows |
-| macOS Python tests | 121 passed, 2 subtests passed on GitHub Actions |
+| macOS Python tests | Pending current CI and ten repeated cancellation runs |
 
 Linux tests ran under WSL2 with musl and CPython 3.12.13. Filesystem lock tests used
 native Linux storage rather than a Windows-mounted directory. Test results do not
@@ -168,9 +162,9 @@ the bundled C# template and absence of application-specific or obsolete package 
 in runtime files. The `uv publish --dry-run` check passed for exactly the two current
 distribution files; this does not authenticate or upload to PyPI.
 
-- No Unity Editor build was run on Linux or macOS. Their Python/process tests
-  passed on hosted CI, including real lock acquisition, cancellation and retry.
-- The released source passed the three-OS GitHub CI workflow linked above.
+- No Unity Editor build was run on Linux or macOS. Their Python/process checks
+  are separate from Unity Editor builds; results are listed above.
+- The latest release requires the three-OS workflow and repeated macOS checks.
 - Passing these checks does not certify every Unity release from 2022 onward,
   every platform, project, SDK or scripting backend.
 - The previous CP949 build-monitor failure is fixed in the release. A strict CP949
@@ -199,3 +193,20 @@ uv build --no-sources
 Actual player validation additionally requires the matching Unity Editor, target
 modules and a valid project. Installing a wheel or passing Python tests alone does
 not establish player-build or device-runtime success.
+
+## macOS cancellation correction
+
+The macOS kernel can report EPERM when a process group has no signalable live
+members, including a group containing only zombies. This was incorrectly allowed
+to replace the original cancellation exception. The corrected signal helper
+checks membership and process state after EPERM. It accepts disappearance or
+terminated-only membership, but propagates denial for live members or unavailable
+status information. It handles TERM, existence probes and KILL consistently.
+
+The existing real-process tests still verify lock release, repeated retries,
+children that ignore TERM, leaders that exit first and unrelated-process survival.
+Additional deterministic tests cover both benign termination races and genuine
+permission failures. This does not claim that all macOS Unity Editor operations
+have been validated.
+
+Kernel reference: [Apple XNU group signalling](https://github.com/apple-oss-distributions/xnu/blob/main/bsd/kern/kern_sig.c).
