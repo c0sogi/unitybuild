@@ -4,7 +4,9 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from unitybuild import unity
+import pytest
+
+from unitybuild import execution, unity
 
 
 def version_result(version: str, *, returncode: int = 0) -> subprocess.CompletedProcess[str]:
@@ -85,3 +87,48 @@ class UnityVersionTest(unittest.TestCase):
         self.assertIn("editor reports: 6000.3.14f1", message)
         self.assertIn("project requires: 2022.3.17f1", message)
         self.assertIn("No Unity project was opened", message)
+
+
+# Editor discovery is owned here; adapters only supply their project and policy.
+
+
+@pytest.mark.parametrize("version", ["2022.3.17f1", "6000.3.14f1"])
+def test_resolver_uses_exact_hub_version_after_stale_override_and_wrong_path(tmp_path, monkeypatch, version):
+    project = tmp_path / "Project"
+    (project / "ProjectSettings").mkdir(parents=True)
+    (project / "ProjectSettings/ProjectVersion.txt").write_text(f"m_EditorVersion: {version}\n")
+    wrong = tmp_path / "wrong-editor"
+    exact = tmp_path / "exact-editor"
+    wrong.touch()
+    exact.touch()
+    monkeypatch.setenv("UNITY_EDITOR_PATH", str(tmp_path / "removed"))
+    monkeypatch.setattr(execution.shutil, "which", lambda _: str(wrong))
+    monkeypatch.setattr(execution, "hub_unity_candidates", lambda _: [exact])
+    with patch(
+        "unitybuild.unity.subprocess.run",
+        side_effect=lambda args, **_: version_result(version if Path(args[0]) == exact else "2021.3.1f1"),
+    ):
+        assert execution.resolve_unity_editor(project) == exact.resolve()
+
+
+@pytest.mark.parametrize("explicit", [True, False])
+def test_resolver_rejects_wrong_explicit_or_environment_editor_without_fallback(tmp_path, monkeypatch, explicit):
+    (tmp_path / "ProjectSettings").mkdir()
+    (tmp_path / "ProjectSettings/ProjectVersion.txt").write_text("m_EditorVersion: 2022.3.17f1\n")
+    editor = tmp_path / "editor"
+    editor.touch()
+    monkeypatch.setenv("UNITY_EDITOR_PATH", "" if explicit else str(editor))
+    with (
+        patch("unitybuild.unity.subprocess.run", return_value=version_result("6000.3.14f1")),
+        patch.object(execution, "hub_unity_candidates", side_effect=AssertionError("No fallback")),
+    ):
+        with pytest.raises(unity.UnityVersionError, match="No Unity project was opened"):
+            execution.resolve_unity_editor(tmp_path, str(editor) if explicit else "")
+
+
+def test_resolver_rejects_missing_explicit_editor_before_probe(tmp_path):
+    (tmp_path / "ProjectSettings").mkdir()
+    (tmp_path / "ProjectSettings/ProjectVersion.txt").write_text("m_EditorVersion: 2022.3.17f1\n")
+    with patch.object(execution, "hub_unity_candidates", side_effect=AssertionError("No fallback")):
+        with pytest.raises(FileNotFoundError, match="No Unity project was opened"):
+            execution.resolve_unity_editor(tmp_path, str(tmp_path / "missing"))
