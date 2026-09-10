@@ -15,7 +15,7 @@ unitybuild
 ```
 
 For a Python dependency, use `uv add unitybuild`. To test an unpublished candidate,
-install its wheel with `uv tool install ./dist/unitybuild-0.1.14-py3-none-any.whl`.
+install its wheel with `uv tool install ./dist/unitybuild-0.1.0-py3-none-any.whl`.
 
 Windows player builds and Windows/Linux Python tests have been exercised.
 Actual Unity builds on Linux and macOS remain unverified. See
@@ -187,7 +187,7 @@ uv run pytest
 uv run ruff check src tests
 uv run pyright
 uv build --no-sources
-uv tool install ./dist/unitybuild-0.1.14-py3-none-any.whl
+uv tool install ./dist/unitybuild-0.1.0-py3-none-any.whl
 ```
 
 Application validators, MQTT configuration, scene generators and app-specific

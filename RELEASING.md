@@ -1,6 +1,6 @@
 # Releasing unitybuild
 
-Candidate: **0.1.14**. Nothing has been pushed or uploaded.
+Candidate: **0.1.0**. Nothing has been pushed or uploaded.
 The intended public repository is `c0sogi/unitybuild`. The local repository and
 package metadata are prepared for that destination; the remote is not created yet.
 MIT is the proposed license for review before publication.
@@ -14,9 +14,9 @@ uv sync --locked
 uv run pytest -q
 uv run ruff check src tests
 uv run pyright
-uv build --no-sources --out-dir dist/0.1.14
-uvx --from twine twine check --strict dist/0.1.14/*
-uv publish --dry-run dist/0.1.14/unitybuild-0.1.14-py3-none-any.whl dist/0.1.14/unitybuild-0.1.14.tar.gz
+uv build --no-sources --out-dir dist/0.1.0
+uvx --from twine twine check --strict dist/0.1.0/*
+uv publish --dry-run dist/0.1.0/unitybuild-0.1.0-py3-none-any.whl dist/0.1.0/unitybuild-0.1.0.tar.gz
 ```
 
 Use exactly these two distribution files when publishing. The top-level `dist`
@@ -37,16 +37,16 @@ README, license and distribution hashes before proceeding.
 2. Publish the two reviewed distributions to PyPI using an authenticated local
    `uv publish` invocation. Configure the PyPI API token privately through
    `UV_PUBLISH_TOKEN` or a supported credential provider; do not store it here.
-3. Verify the PyPI version and hashes, then install `unitybuild==0.1.14` in a fresh
+3. Verify the PyPI version and hashes, then install `unitybuild==0.1.0` in a fresh
    environment using PyPI alone. Repeat the CLI and consumer integration checks.
-4. Tag the published source as `v0.1.14` and create its GitHub release with the
+4. Tag the published source as `v0.1.0` and create its GitHub release with the
    reviewed distributions attached.
 
 Prepared commands for the publication steps (not a script to run during checks):
 
 ```sh
 gh repo create c0sogi/unitybuild --public --source . --remote origin --push
-uv publish dist/0.1.14/unitybuild-0.1.14-py3-none-any.whl dist/0.1.14/unitybuild-0.1.14.tar.gz
+uv publish dist/0.1.0/unitybuild-0.1.0-py3-none-any.whl dist/0.1.0/unitybuild-0.1.0.tar.gz
 ```
 
 The GitHub repository name and PyPI project name are separate. A missing PyPI
@@ -56,7 +56,7 @@ The local workflow runs checks on pushes and pull requests; it does not upload.
 
 ## Consumer transition
 
-Consumers should declare `unitybuild>=0.1.14,<0.2` as a normal dependency.
+Consumers should declare `unitybuild>=0.1.0,<0.2` as a normal dependency.
 Before publication, a fresh environment can resolve that requirement using
 `uv pip install --find-links PATH_TO_CANDIDATE_DIRECTORY CONSUMER_WHEEL`.
 This verifies distribution integration without relying on the source checkout.

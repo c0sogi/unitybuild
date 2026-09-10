@@ -1,9 +1,14 @@
 # unitybuild validation
 
-Last updated: 2026-09-10. Package version: 0.1.14 (unpublished release candidate).
+Last updated: 2026-09-10. Package version: 0.1.0 (unpublished first release).
 This document records package-level checks and their limits. Application-specific
 migration history, deployment logs, device identifiers, and machine-local evidence
 paths are outside its scope.
+
+The first public version is 0.1.0. Earlier 0.1.11 through 0.1.14 labels below
+identify unpublished development snapshots, not previous public releases. Runtime
+files in the 0.1.0 wheel match the validated 0.1.14 candidate byte for byte; only
+version metadata and documentation changed.
 
 ## Latest source checks
 
@@ -19,7 +24,7 @@ Linux tests ran under WSL2 with musl and CPython 3.12.13. Filesystem lock tests 
 native Linux storage rather than a Windows-mounted directory. Test results do not
 establish that Unity player builds work on every host or target platform.
 
-Version 0.1.14 fixes build-monitor output on strict CP949 and ASCII streams.
+The release fixes build-monitor output on strict CP949 and ASCII streams.
 Real subprocess tests cover plain and rich output with CP949, ASCII and UTF-8.
 Unrepresentable terminal characters are escaped; captured output and UTF-8 log
 files preserve the original text. The caller's stream encoding is unchanged and
@@ -137,7 +142,7 @@ preserved. This host-environment correction is separate from C# build parameters
 
 ## Distribution checks and remaining limits
 
-Version 0.1.14 wheel and source distributions passed strict Twine metadata checks.
+Version 0.1.0 wheel and source distributions passed strict Twine metadata checks.
 A fresh Windows environment installed the wheel outside the checkout and built an
 independent Windows player before any consumer adapter was installed. The current
 CLI executable was present and the obsolete executable was absent. The build log
@@ -160,7 +165,7 @@ distribution files; this does not authenticate or upload to PyPI.
 - A three-OS CI workflow exists locally; no GitHub CI run was verified.
 - Passing these checks does not certify every Unity release from 2022 onward,
   every platform, project, SDK or scripting backend.
-- The previous CP949 build-monitor failure is fixed in 0.1.14. A strict CP949
+- The previous CP949 build-monitor failure is fixed in the release. A strict CP949
   installed-wheel Unity player build succeeded; regression tests additionally
   exercised replacement characters and emoji with original UTF-8 log preservation.
 
