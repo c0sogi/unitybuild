@@ -211,9 +211,9 @@ inaccessible locks still block a second build. POSIX cancellation stops the buil
 own process group, escalating to SIGKILL if children ignore SIGTERM even when the
 parent has already exited. Unrelated editor sessions are not targeted.
 
-Real lock/cancellation tests passed on Windows and Linux (WSL). Actual Unity
-cancellation/retry was verified on Windows. macOS execution is pending; the same
-POSIX implementation and tests are included in the three-OS CI matrix.
+Real lock/cancellation tests passed on Windows, Linux and macOS GitHub Actions.
+Actual Unity cancellation/retry was verified on Windows. Unity Editor builds on
+Linux and macOS remain unverified.
 
 
 Custom builders can declare `build.configuration_environment` to receive `release`

@@ -1,9 +1,15 @@
 # Releasing unitybuild
 
-Candidate: **0.1.0**. Nothing has been pushed or uploaded.
-The intended public repository is `c0sogi/unitybuild`. The local repository and
-package metadata are prepared for that destination; the remote is not created yet.
-MIT is the proposed license for review before publication.
+Version **0.1.0** is published under the MIT license:
+
+- [Public repository](https://github.com/c0sogi/unitybuild)
+- [PyPI package](https://pypi.org/project/unitybuild/0.1.0/)
+- [GitHub release](https://github.com/c0sogi/unitybuild/releases/tag/v0.1.0)
+- [Passing release CI](https://github.com/c0sogi/unitybuild/actions/runs/34487294941)
+
+The commands below describe the release procedure. For subsequent releases,
+change the version first and use a new output directory. Never rebuild changed
+runtime code under an already-published version.
 
 ## Validate and package
 
@@ -28,8 +34,7 @@ See [VALIDATION.md](VALIDATION.md) for completed checks and their limits.
 
 ## Publication boundary
 
-The following steps publish externally and are deliberately not executed during
-preparation. Recheck package-name availability and review the staged source,
+The following steps publish externally. They were completed for 0.1.0. Recheck package-name availability and review the staged source,
 README, license and distribution hashes before proceeding.
 
 1. Commit the reviewed files on `main`, create the public GitHub repository, then
@@ -42,7 +47,7 @@ README, license and distribution hashes before proceeding.
 4. Tag the published source as `v0.1.0` and create its GitHub release with the
    reviewed distributions attached.
 
-Prepared commands for the publication steps (not a script to run during checks):
+Commands used for the first publication (the repository already exists):
 
 ```sh
 gh repo create c0sogi/unitybuild --public --source . --remote origin --push
@@ -51,7 +56,7 @@ uv publish dist/0.1.0/unitybuild-0.1.0-py3-none-any.whl dist/0.1.0/unitybuild-0.
 
 The GitHub repository name and PyPI project name are separate. A missing PyPI
 project page does not guarantee that the name can be registered. Authentication,
-name acceptance and remote CI execution can only be confirmed at publication.
+name acceptance and remote CI execution were verified for the first release.
 The local workflow runs checks on pushes and pull requests; it does not upload.
 
 ## Consumer transition
@@ -66,8 +71,8 @@ After PyPI installation is verified, remove the consumer workspace's
 `uv lock --upgrade-package unitybuild` followed by `uv sync --locked`.
 Confirm that the lock entry uses the package registry and contains no editable
 source for unitybuild, then rerun the consumer tests and a saved-profile preview.
-Until the distribution is available on PyPI, retain the existing source override
-in the active workspace so ordinary synchronization remains usable.
+The consuming workspace completed this transition for 0.1.0 and passed its
+tests and saved-profile preview using the PyPI installation.
 
 Build and publication guidance follows the
 [uv package guide](https://docs.astral.sh/uv/guides/package/).

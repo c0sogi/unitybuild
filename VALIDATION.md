@@ -1,6 +1,6 @@
 # unitybuild validation
 
-Last updated: 2026-09-10. Package version: 0.1.0 (unpublished first release).
+Last updated: 2026-09-10. Package version: 0.1.0 (published first release).
 This document records package-level checks and their limits. Application-specific
 migration history, deployment logs, device identifiers, and machine-local evidence
 paths are outside its scope.
@@ -12,6 +12,11 @@ macOS run then found that simultaneous flock/record-lock probes conflicted with
 each other. Each probe now releases its lock before the next probe. Existing
 real-lock cancellation and retry tests exercise this correction on CI.
 
+Published on [PyPI](https://pypi.org/project/unitybuild/0.1.0/) with a
+[GitHub release](https://github.com/c0sogi/unitybuild/releases/tag/v0.1.0).
+The released source passed [Windows, Linux and macOS CI](https://github.com/c0sogi/unitybuild/actions/runs/34487294941),
+including Ruff, Pyright, tests, distribution builds and strict metadata checks.
+
 ## Latest source checks
 
 | Check | Result |
@@ -20,7 +25,7 @@ real-lock cancellation and retry tests exercise this correction on CI.
 | Linux Python tests | 121 passed, 2 subtests passed |
 | Ruff, including import sorting | Passed on Windows |
 | Pyright | Passed on Windows |
-| macOS execution | Not performed |
+| macOS Python tests | 121 passed, 2 subtests passed on GitHub Actions |
 
 Linux tests ran under WSL2 with musl and CPython 3.12.13. Filesystem lock tests used
 native Linux storage rather than a Windows-mounted directory. Test results do not
@@ -65,6 +70,7 @@ strict metadata checks. This restructuring did not execute a Unity player build.
 
 | Editor | Host | Build path | Observed result |
 | --- | --- | --- | --- |
+| 6000.3.14f1 | Windows | Published 0.1.0 from PyPI, bundled C# builder | Independent Windows player rebuild succeeded with strict CP949 output |
 | 6000.3.14f1 | Windows | 0.1.14 installed wheel, bundled C# builder, Windows player | Independent project built successfully with strict CP949 console output and no application adapter installed |
 | 6000.3.14f1 | Windows | 0.1.13 installed wheel, bundled C# builder, Windows player | Fresh independent project built successfully through `UnityBuild.Builder.Build`; only the current helper path was created |
 | 6000.3.14f1 | Windows | Saved profile, Windows player | Built from an independent project with no C# files; no helper added |
@@ -162,14 +168,21 @@ the bundled C# template and absence of application-specific or obsolete package 
 in runtime files. The `uv publish --dry-run` check passed for exactly the two current
 distribution files; this does not authenticate or upload to PyPI.
 
-- No Unity Editor build was run on Linux or macOS. macOS behavior has layout fixtures
-  but no actual execution verification.
-- A three-OS CI workflow exists locally; no GitHub CI run was verified.
+- No Unity Editor build was run on Linux or macOS. Their Python/process tests
+  passed on hosted CI, including real lock acquisition, cancellation and retry.
+- The released source passed the three-OS GitHub CI workflow linked above.
 - Passing these checks does not certify every Unity release from 2022 onward,
   every platform, project, SDK or scripting backend.
 - The previous CP949 build-monitor failure is fixed in the release. A strict CP949
   installed-wheel Unity player build succeeded; regression tests additionally
   exercised replacement characters and emoji with original UTF-8 log preservation.
+
+The published wheel and source archive hashes match the reviewed local files.
+A fresh environment installed version 0.1.0 from PyPI alone and built the Windows
+player successfully. The consuming workspace removed its editable source override,
+resolved unitybuild from PyPI, passed 154 adapter tests, Ruff and Pyright, and
+previewed its native saved profile successfully. Its lock entry points to the
+registry, and its library import comes from site-packages rather than a sibling checkout.
 
 ## Repeatable package checks
 
