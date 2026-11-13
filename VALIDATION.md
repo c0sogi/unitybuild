@@ -1,6 +1,6 @@
 # unitybuild validation
 
-Last updated: 2026-09-10. Package version: 0.1.1 (published patch release).
+Last updated: 2026-11-13. Package version: 0.1.2 (patch release validation in progress).
 This document records package-level checks and their limits. Application-specific
 migration history, deployment logs, device identifiers, and machine-local evidence
 paths are outside its scope.
@@ -14,25 +14,34 @@ signalling and ten repeated macOS cancellation-suite runs in CI. Those checks al
 passed on Windows, Linux and macOS for the exact v0.1.1 source. The PyPI patch
 is available at [unitybuild 0.1.1](https://pypi.org/project/unitybuild/0.1.1/).
 
+Version 0.1.2 fixes build monitoring when Windows output is redirected or piped.
+Python opens Windows stdio with the `surrogateescape` error handler. The 0.1.1
+monitor replaced only `strict`, so it still aborted on characters outside the
+console code page, such as `µ` under CP949. Release status is recorded after the
+three-OS workflow finishes.
+
 ## Latest source checks
 
 | Check | Result |
 | --- | --- |
-| Windows Python tests | 130 passed, 2 subtests passed; 2 POSIX-only tests skipped |
-| Linux Python tests | 134 passed, 2 subtests passed on GitHub Actions |
+| Windows Python tests | 143 passed, 2 subtests passed; 2 POSIX-only tests skipped |
+| Linux Python tests | Pending current CI |
 | Ruff, including import sorting | Passed on Windows |
 | Pyright | Passed on Windows |
-| macOS Python tests | 134 passed, 2 subtests passed; cancellation suite passed 20 tests in each of 10 consecutive runs |
+| macOS Python tests | Pending current CI and ten repeated cancellation runs |
 
 Linux tests ran under WSL2 with musl and CPython 3.12.13. Filesystem lock tests used
 native Linux storage rather than a Windows-mounted directory. Test results do not
 establish that Unity player builds work on every host or target platform.
 
-The release fixes build-monitor output on strict CP949 and ASCII streams.
-Real subprocess tests cover plain and rich output with CP949, ASCII and UTF-8.
-Unrepresentable terminal characters are escaped; captured output and UTF-8 log
-files preserve the original text. The caller's stream encoding is unchanged and
-its error policy is restored when monitoring ends, including exceptional exits.
+Build-monitor output is escaped on CP949 and ASCII streams that use either default
+Python error handler: `strict` (POSIX) or `surrogateescape` (Windows stdio,
+including redirected and piped output). Real subprocess tests cover plain and rich
+output with CP949, ASCII and UTF-8. They also cover a parent process whose
+redirected stdout uses CP949 with `surrogateescape`. Unrepresentable terminal
+characters are escaped; captured output and UTF-8 log files preserve the original
+text. The caller's stream encoding is unchanged and its original error policy is
+restored when monitoring ends, including exceptional exits.
 
 Version 0.1.13 removes compatibility with the former package name. Tests verify
 that obsolete configuration, environment variables, registry and log directories
@@ -173,6 +182,9 @@ distribution files; this does not authenticate or upload to PyPI.
 - The previous CP949 build-monitor failure is fixed in the release. A strict CP949
   installed-wheel Unity player build succeeded; regression tests additionally
   exercised replacement characters and emoji with original UTF-8 log preservation.
+  Version 0.1.2 extends the fix to the `surrogateescape` handler used by redirected
+  and piped Windows output. It was checked with a Python child process writing `µ`
+  to a redirected CP949 stdout, not with a Unity build.
 
 The published wheel and source archive hashes match the reviewed local files.
 A fresh environment installed version 0.1.0 from PyPI alone and built the Windows

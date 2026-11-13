@@ -20,9 +20,9 @@ uv sync --locked
 uv run pytest -q
 uv run ruff check src tests
 uv run pyright
-uv build --no-sources --out-dir dist/0.1.1
-uvx --from twine twine check --strict dist/0.1.1/*
-uv publish --dry-run dist/0.1.1/unitybuild-0.1.1-py3-none-any.whl dist/0.1.1/unitybuild-0.1.1.tar.gz
+uv build --no-sources --out-dir dist/0.1.2
+uvx --from twine twine check --strict dist/0.1.2/*
+uv publish --dry-run dist/0.1.2/unitybuild-0.1.2-py3-none-any.whl dist/0.1.2/unitybuild-0.1.2.tar.gz
 ```
 
 Use exactly these two distribution files when publishing. The top-level `dist`
@@ -51,7 +51,7 @@ Commands used for the first publication (the repository already exists):
 
 ```sh
 gh repo create c0sogi/unitybuild --public --source . --remote origin --push
-uv publish dist/0.1.1/unitybuild-0.1.1-py3-none-any.whl dist/0.1.1/unitybuild-0.1.1.tar.gz
+uv publish dist/0.1.2/unitybuild-0.1.2-py3-none-any.whl dist/0.1.2/unitybuild-0.1.2.tar.gz
 ```
 
 The GitHub repository name and PyPI project name are separate. A missing PyPI

@@ -15,7 +15,7 @@ unitybuild
 ```
 
 For a Python dependency, use `uv add unitybuild`. To test an unpublished candidate,
-install its wheel with `uv tool install ./dist/unitybuild-0.1.1-py3-none-any.whl`.
+install its wheel with `uv tool install ./dist/unitybuild-0.1.2-py3-none-any.whl`.
 
 Windows player builds and Windows/Linux Python tests have been exercised.
 Actual Unity builds on Linux and macOS remain unverified. See
@@ -187,7 +187,7 @@ uv run pytest
 uv run ruff check src tests
 uv run pyright
 uv build --no-sources
-uv tool install ./dist/unitybuild-0.1.1-py3-none-any.whl
+uv tool install ./dist/unitybuild-0.1.2-py3-none-any.whl
 ```
 
 Application validators, MQTT configuration, scene generators and app-specific
@@ -244,3 +244,9 @@ Version 0.1.1 corrects a macOS cancellation race in 0.1.0. A group with only
 terminated processes can report a permission error; cancellation now verifies
 remaining process state before treating the group as finished. Actual permission
 failures for live or inaccessible processes remain errors.
+
+Version 0.1.2 fixes build monitoring when Windows output is redirected or piped.
+Python opens Windows stdio with the `surrogateescape` error handler, which still
+fails on characters outside the code page (for example `µ` under CP949). Such
+characters are now escaped on screen for both `strict` and `surrogateescape`
+streams, and the original handler is restored when monitoring ends.

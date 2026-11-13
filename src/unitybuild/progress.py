@@ -24,6 +24,9 @@ from rich.live import Live
 from rich.text import Text
 
 PARENT_LOG_ENV = "UNITYBUILD_LOG_PARENT"
+# Python's default stdio error handlers: "strict" on POSIX and "surrogateescape" on
+# Windows. Both raise for characters that the stream's encoding cannot represent.
+_RAISING_STDIO_ERRORS = frozenset({"strict", "surrogateescape"})
 
 
 def session_log(directory: Path, label: str) -> Path:
@@ -85,6 +88,7 @@ class BuildMonitor:
         self.live: Live | None = None
         self.stream: IO[str] | None = None
         self._console_stream: io.TextIOWrapper | None = None
+        self._console_errors = "strict"
         self.nested = bool(os.environ.get(PARENT_LOG_ENV))
         self.rich = (
             self.console.is_terminal
@@ -96,9 +100,10 @@ class BuildMonitor:
 
     def __enter__(self) -> Self:
         stream = self.console.file
-        if isinstance(stream, io.TextIOWrapper) and stream.errors == "strict":
+        if isinstance(stream, io.TextIOWrapper) and stream.errors in _RAISING_STDIO_ERRORS:
             # Keep the terminal's encoding. Escape unrepresentable characters only
             # on screen; the persisted UTF-8 log and captured output stay intact.
+            self._console_errors = stream.errors
             stream.reconfigure(errors="backslashreplace")
             self._console_stream = stream
         try:
@@ -185,7 +190,7 @@ class BuildMonitor:
             self._finish(exc_type)
         finally:
             if self._console_stream is not None:
-                self._console_stream.reconfigure(errors="strict")
+                self._console_stream.reconfigure(errors=self._console_errors)
                 self._console_stream = None
 
     def _finish(self, exc_type) -> None:

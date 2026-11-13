@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import os
 import subprocess
 import sys
 from unittest.mock import patch
@@ -13,12 +14,14 @@ from unitybuild.progress import BuildMonitor, FileTail, run_logged_process
 
 @pytest.mark.parametrize("encoding", ["cp949", "ascii", "utf-8"])
 @pytest.mark.parametrize("rich", [False, True])
-def test_console_encoding_does_not_abort_process_or_change_full_log(tmp_path, monkeypatch, encoding, rich):
+# Python opens stdio with "strict" on POSIX and "surrogateescape" on Windows.
+@pytest.mark.parametrize("errors", ["strict", "surrogateescape"])
+def test_console_encoding_does_not_abort_process_or_change_full_log(tmp_path, monkeypatch, encoding, rich, errors):
     monkeypatch.setenv("TERM", "xterm-256color")
     monkeypatch.delenv("UNITYBUILD_LOG_PARENT", raising=False)
     monkeypatch.delenv("UNITYBUILD_PLAIN", raising=False)
     raw = io.BytesIO()
-    output = io.TextIOWrapper(raw, encoding=encoding, errors="strict")
+    output = io.TextIOWrapper(raw, encoding=encoding, errors=errors)
     log = tmp_path / "build.log"
     message = "빌드 완료 \ufffd \U0001f680"
     result = run_logged_process(
@@ -32,16 +35,47 @@ def test_console_encoding_does_not_abort_process_or_change_full_log(tmp_path, mo
     assert result.returncode == 0
     assert message in result.stdout and message in log.read_text(encoding="utf-8")
     assert message.encode(encoding, errors="backslashreplace") in raw.getvalue()
-    assert output.encoding == encoding and output.errors == "strict"
+    assert output.encoding == encoding and output.errors == errors
 
 
-def test_console_error_policy_is_restored_after_failure(tmp_path):
-    output = io.TextIOWrapper(io.BytesIO(), encoding="cp949", errors="strict")
+@pytest.mark.parametrize("errors", ["strict", "surrogateescape"])
+def test_console_error_policy_is_restored_after_failure(tmp_path, errors):
+    output = io.TextIOWrapper(io.BytesIO(), encoding="cp949", errors=errors)
     with pytest.raises(RuntimeError, match="test failure"):
         with BuildMonitor("Build", console=Console(file=output)) as monitor:
             monitor.feed("\ufffd\n")
             raise RuntimeError("test failure")
-    assert output.errors == "strict"
+    assert output.errors == errors
+
+
+def test_redirected_stdout_escapes_child_output_outside_its_code_page(tmp_path):
+    # Redirected stdout on Korean Windows is cp949 with "surrogateescape", and Unity can log
+    # text cp949 cannot represent. The default console must escape it, not abort the build.
+    script = """
+import sys
+from pathlib import Path
+from unitybuild.progress import run_logged_process
+child = [sys.executable, "-c", "print('Mesh', chr(0xb5))"]
+result = run_logged_process(child, cwd=Path.cwd(), label="Build", log_path=Path("build.log"))
+print("exit", result.returncode)
+"""
+    environment = {key: value for key, value in os.environ.items() if not key.startswith("UNITYBUILD_")}
+    environment["PYTHONIOENCODING"] = "cp949:surrogateescape"
+    stdout = tmp_path / "stdout.txt"
+    with stdout.open("wb") as stream:
+        completed = subprocess.run(
+            [sys.executable, "-c", script],
+            cwd=tmp_path,
+            env=environment,
+            stdout=stream,
+            stderr=subprocess.STDOUT,
+            timeout=60,
+        )
+    output = stdout.read_bytes()
+    assert completed.returncode == 0, output.decode("cp949", errors="replace")
+    assert b"Mesh \\xb5" in output and b"Full log: build.log" in output
+    assert output.rstrip().endswith(b"exit 0")
+    assert "Mesh \u00b5" in (tmp_path / "build.log").read_text(encoding="utf-8")
 
 
 def test_output_and_unity_log_are_visible_before_process_finishes(tmp_path):
