@@ -1,11 +1,12 @@
 # Releasing unitybuild
 
-Version **0.1.1** is published under the MIT license:
+Version **0.1.2** is published under the MIT license:
 
 - [Repository](https://github.com/c0sogi/unitybuild)
-- [PyPI package](https://pypi.org/project/unitybuild/0.1.1/)
-- [GitHub release](https://github.com/c0sogi/unitybuild/releases/tag/v0.1.1)
+- [PyPI package](https://pypi.org/project/unitybuild/0.1.2/)
+- [GitHub release](https://github.com/c0sogi/unitybuild/releases/tag/v0.1.2)
 - Version 0.1.0 has a known intermittent macOS cancellation failure; use the corrected 0.1.1 release.
+- Version 0.1.1 can abort redirected or piped Windows builds on characters outside the console code page; use 0.1.2.
 
 The commands below describe the release procedure. For subsequent releases,
 change the version first and use a new output directory. Never rebuild changed
@@ -42,9 +43,9 @@ README, license and distribution hashes before proceeding.
 2. Publish the two reviewed distributions to PyPI using an authenticated local
    `uv publish` invocation. Configure the PyPI API token privately through
    `UV_PUBLISH_TOKEN` or a supported credential provider; do not store it here.
-3. Verify the PyPI version and hashes, then install `unitybuild==0.1.1` in a fresh
+3. Verify the PyPI version and hashes, then install `unitybuild==0.1.2` in a fresh
    environment using PyPI alone. Repeat the CLI and consumer integration checks.
-4. Tag the published source as `v0.1.1` and create its GitHub release with the
+4. Tag the published source as `v0.1.2` and create its GitHub release with the
    reviewed distributions attached.
 
 Commands used for the first publication (the repository already exists):
@@ -61,7 +62,7 @@ The local workflow runs checks on pushes and pull requests; it does not upload.
 
 ## Consumer transition
 
-Consumers should declare `unitybuild>=0.1.1,<0.2` as a normal dependency.
+Consumers should declare `unitybuild>=0.1.2,<0.2` as a normal dependency.
 Before publication, a fresh environment can resolve that requirement using
 `uv pip install --find-links PATH_TO_CANDIDATE_DIRECTORY CONSUMER_WHEEL`.
 This verifies distribution integration without relying on the source checkout.

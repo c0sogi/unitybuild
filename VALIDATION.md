@@ -1,6 +1,6 @@
 # unitybuild validation
 
-Last updated: 2026-11-13. Package version: 0.1.2 (patch release validation in progress).
+Last updated: 2026-11-13. Package version: 0.1.2 (published patch release).
 This document records package-level checks and their limits. Application-specific
 migration history, deployment logs, device identifiers, and machine-local evidence
 paths are outside its scope.
@@ -17,18 +17,22 @@ is available at [unitybuild 0.1.1](https://pypi.org/project/unitybuild/0.1.1/).
 Version 0.1.2 fixes build monitoring when Windows output is redirected or piped.
 Python opens Windows stdio with the `surrogateescape` error handler. The 0.1.1
 monitor replaced only `strict`, so it still aborted on characters outside the
-console code page, such as `µ` under CP949. Release status is recorded after the
-three-OS workflow finishes.
+console code page, such as `µ` under CP949.
+
+[Release CI](https://github.com/c0sogi/unitybuild/actions/runs/43375417155)
+passed on Windows, Linux and macOS for the exact v0.1.2 source, including ten
+consecutive macOS cancellation-suite runs. The PyPI patch is available at
+[unitybuild 0.1.2](https://pypi.org/project/unitybuild/0.1.2/).
 
 ## Latest source checks
 
 | Check | Result |
 | --- | --- |
 | Windows Python tests | 143 passed, 2 subtests passed; 2 POSIX-only tests skipped |
-| Linux Python tests | Pending current CI |
+| Linux Python tests | 147 passed, 2 subtests passed on GitHub Actions |
 | Ruff, including import sorting | Passed on Windows |
 | Pyright | Passed on Windows |
-| macOS Python tests | Pending current CI and ten repeated cancellation runs |
+| macOS Python tests | 147 passed, 2 subtests passed; cancellation suite passed 20 tests in each of 10 consecutive runs |
 
 Linux tests ran under WSL2 with musl and CPython 3.12.13. Filesystem lock tests used
 native Linux storage rather than a Windows-mounted directory. Test results do not
@@ -192,6 +196,15 @@ player successfully. The consuming workspace removed its editable source overrid
 resolved unitybuild from PyPI, passed 154 adapter tests, Ruff and Pyright, and
 previewed its native saved profile successfully. Its lock entry points to the
 registry, and its library import comes from site-packages rather than a sibling checkout.
+
+For 0.1.2, the published wheel and source archive hashes also match the reviewed
+local files. A fresh Windows environment installed 0.1.2 from PyPI alone, ran the
+CLI and passed the redirected CP949 check; no Unity player build was run. Before
+publication, the consuming workspace passed 143 adapter tests and 378 workspace
+tests (3 skipped) with the candidate wheel. After publication it raised its
+requirement to `unitybuild>=0.1.2,<0.2` and resolved 0.1.2 from the registry. It
+then passed the same tests and the redirected check, and previewed its native saved
+profile with redirected output.
 
 ## Repeatable package checks
 
